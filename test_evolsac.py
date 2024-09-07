@@ -1,4 +1,4 @@
-import os
+import sys
 
 import numpy as np
 from double_pendulum.experiments.hardware_control_loop_tmotors import run_experiment
@@ -8,17 +8,17 @@ from double_pendulum.model.symbolic_plant import SymbolicDoublePendulum
 from double_pendulum.simulation.gym_env import double_pendulum_dynamics_func
 from double_pendulum.simulation.perturbations import get_random_gauss_perturbation_array
 from double_pendulum.simulation.simulation import Simulator
+from stable_baselines3 import SAC
 
 # from double_pendulum.controller.evolsac.evolsac_controller import EvolSACController
 from evolsaccontroller import EvolSACController
-from stable_baselines3 import SAC
 
-design = "design_C.1"
+robot = str(sys.argv[1])
+friction_compensation = True if str(sys.argv[2]) == "FC" else False
+model_selection = int(sys.argv[3])
 
-
-friction_compensation = True
-robot = "acrobot"
-torque_limit = [0.0, 3.0]
+max_torque = 3.0
+torque_limit = [0.0, max_torque] if robot == "acrobot" else [max_torque, 0.0]
 
 # trajectory
 dt = 0.005
@@ -29,20 +29,20 @@ u1 = np.zeros(N + 1)
 u2 = np.zeros(N + 1)
 U_des = np.array([u1, u2]).T
 
-# controller
-# learning environment parameters
 state_representation = 2
+integrator = "runge_kutta"
 
 model_par_path = "model_parameters.yml"
 mpar = model_parameters(filepath=model_par_path)
 plant = SymbolicDoublePendulum(model_pars=mpar)
+
 print("Loading model parameters...")
 simulator = Simulator(plant=plant)
 
 dynamics_func = double_pendulum_dynamics_func(
     simulator=simulator,
     dt=dt,
-    integrator="runge_kutta",
+    integrator=integrator,
     robot=robot,
     state_representation=state_representation,
     max_velocity=50.0,
@@ -54,8 +54,16 @@ control_frequency = 1 / 100  # 100 Hz controller frequency
 
 ctrl_rate = int(control_frequency / dt)
 
-# dovrebbe essere quello corretto per la performance leaderboard (senza attrito)
-model_path = "policies/model_1.0/acrobot/evolsac/model.zip"
+if model_selection == 0: 
+    # dovrebbe essere quello corretto per la performance leaderboard (senza attrito)
+    model_path = f"models/{robot}_no_friction"
+elif model_selection == 1:
+    # modello allenato sui parametri sbagliati (con l'attrito)
+    model_path = f"models/{robot}_noisy"
+elif model_selection == 2:
+    
+    model_path = f"models/{robot}_noisy"
+
 
 sac_model = SAC.load(model_path)
 controller = EvolSACController(
@@ -91,7 +99,7 @@ perturbation_array, _, _, _ = get_random_gauss_perturbation_array(
 #     can_port="can0",
 #     motor_ids=[3, 1],
 #     tau_limit=torque_limit,
-#     save_dir=os.path.join("data", design, f"{robot}/evolsac_{"FC" if friction_compensation else ""}"),
+#     save_dir=os.path.join("data", f"{robot}/evolsac_{"FC" if friction_compensation else ""}"),
 #     record_video=True,
 #     safety_velocity_limit=30.0,
 #     perturbation_array=perturbation_array,
