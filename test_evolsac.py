@@ -1,5 +1,5 @@
 import sys
-
+import os
 import numpy as np
 from double_pendulum.experiments.hardware_control_loop_tmotors import run_experiment
 from double_pendulum.filter.lowpass import lowpass_filter
@@ -49,19 +49,18 @@ dynamics_func = double_pendulum_dynamics_func(
     torque_limit=torque_limit,
 )
 
-dt = 1 / 500  # 500 Hz
+dt = 1 / 200  # 500 Hz
 control_frequency = 1 / 100  # 100 Hz controller frequency
 
 ctrl_rate = int(control_frequency / dt)
 
-if model_selection == 0: 
+if model_selection == 0:
     # dovrebbe essere quello corretto per la performance leaderboard (senza attrito)
     model_path = f"models/{robot}_no_friction"
 elif model_selection == 1:
     # modello allenato sui parametri sbagliati (con l'attrito)
     model_path = f"models/{robot}_noisy"
 elif model_selection == 2:
-    
     model_path = f"models/{robot}_noisy"
 
 
@@ -71,7 +70,7 @@ controller = EvolSACController(
     dynamics_func=dynamics_func,
     window_size=0,
     include_time=False,
-    ctrl_rate=5,
+    ctrl_rate=ctrl_rate,
     wait_steps=0,
 )
 
@@ -92,15 +91,15 @@ controller.init()
 perturbation_array, _, _, _ = get_random_gauss_perturbation_array(
     t_final, dt, 2, 1.0, [0.05, 0.1], [0.4, 0.6]
 )
-# run_experiment(
-#     controller=controller,
-#     dt=dt,
-#     t_final=t_final,
-#     can_port="can0",
-#     motor_ids=[3, 1],
-#     tau_limit=torque_limit,
-#     save_dir=os.path.join("data", f"{robot}/evolsac_{"FC" if friction_compensation else ""}"),
-#     record_video=True,
-#     safety_velocity_limit=30.0,
-#     perturbation_array=perturbation_array,
-# )
+run_experiment(
+    controller=controller,
+    dt=dt,
+    t_final=t_final,
+    can_port="can0",
+    motor_ids=[3, 1],
+    tau_limit=torque_limit,
+    save_dir=os.path.join("data", f"{robot}/evolsac_{'FC' if friction_compensation else ''}"),
+    record_video=False,
+    safety_velocity_limit=30.0,
+    perturbation_array=perturbation_array,
+)
