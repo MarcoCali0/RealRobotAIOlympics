@@ -1,5 +1,6 @@
 import sys
 import os
+import gymnasium as gym
 import numpy as np
 from double_pendulum.experiments.hardware_control_loop_tmotors import run_experiment
 from double_pendulum.filter.lowpass import lowpass_filter
@@ -49,10 +50,11 @@ dynamics_func = double_pendulum_dynamics_func(
     torque_limit=torque_limit,
 )
 
-dt = 1 / 200  # 500 Hz
+dt = 1 / 500  # 500 Hz
 control_frequency = 1 / 100  # 100 Hz controller frequency
-
 ctrl_rate = int(control_frequency / dt)
+
+wait_steps = 0
 
 if model_selection == 0:
     # dovrebbe essere quello corretto per la performance leaderboard (senza attrito)
@@ -61,17 +63,24 @@ elif model_selection == 1:
     # modello allenato sui parametri sbagliati (con l'attrito)
     model_path = f"models/{robot}_noisy"
 elif model_selection == 2:
-    model_path = f"models/{robot}_noisy"
+    model_path = f"models/{robot}_noise_trained"
+
+if model_selection != 2:
+    sac_model = SAC.load(model_path)
+else:
+    # this controller requires redefining obs and act spaces
+    obs_space = gym.spaces.Box(np.array([-1.0] * 4), np.array([1.0] * 4))
+    act_space = gym.spaces.Box(np.array([-1]), np.array([1]))
+    sac_model = SAC.load(model_path, custom_objects={'observation_space': obs_space, 'action_space': act_space})
 
 
-sac_model = SAC.load(model_path)
 controller = EvolSACController(
     model=sac_model,
     dynamics_func=dynamics_func,
     window_size=0,
     include_time=False,
     ctrl_rate=ctrl_rate,
-    wait_steps=0,
+    wait_steps=wait_steps,
 )
 
 
@@ -91,6 +100,7 @@ controller.init()
 perturbation_array, _, _, _ = get_random_gauss_perturbation_array(
     t_final, dt, 2, 1.0, [0.05, 0.1], [0.4, 0.6]
 )
+
 run_experiment(
     controller=controller,
     dt=dt,
@@ -98,8 +108,8 @@ run_experiment(
     can_port="can0",
     motor_ids=[3, 1],
     tau_limit=torque_limit,
-    save_dir=os.path.join("data", f"{robot}/evolsac_{'FC' if friction_compensation else ''}"),
+    save_dir=os.path.join("data", f"{robot}/evolsac_{model_path}_{'FC' if friction_compensation else ''}"),
     record_video=False,
     safety_velocity_limit=30.0,
-    perturbation_array=perturbation_array,
+#    perturbation_array=perturbation_array,
 )
