@@ -11,14 +11,14 @@ from double_pendulum.simulation.perturbations import get_random_gauss_perturbati
 from double_pendulum.simulation.simulation import Simulator
 from stable_baselines3 import SAC
 
-# from double_pendulum.controller.evolsac.evolsac_controller import EvolSACController
-from evolsaccontroller import EvolSACController
+from double_pendulum.controller.evolsac.evolsac_controller import EvolSACController
+#from evolsaccontroller import EvolSACController
 
 robot = str(sys.argv[1])
 friction_compensation = True if str(sys.argv[2]) == "FC" else False
 model_selection = int(sys.argv[3])
 
-max_torque = 3.0
+max_torque = 5.0
 torque_limit = [0.0, max_torque] if robot == "acrobot" else [max_torque, 0.0]
 
 # trajectory
@@ -40,17 +40,18 @@ plant = SymbolicDoublePendulum(model_pars=mpar)
 print("Loading model parameters...")
 simulator = Simulator(plant=plant)
 
+max_velocity = 50.0 # usually 50.0
 dynamics_func = double_pendulum_dynamics_func(
     simulator=simulator,
     dt=dt,
     integrator=integrator,
     robot=robot,
     state_representation=state_representation,
-    max_velocity=50.0,
+    max_velocity=max_velocity,
     torque_limit=torque_limit,
 )
 
-dt = 1 / 500  # 500 Hz
+#dt = 1 / 500  # 500 Hz
 control_frequency = 1 / 100  # 100 Hz controller frequency
 ctrl_rate = int(control_frequency / dt)
 
@@ -64,12 +65,15 @@ elif model_selection == 1:
     model_path = f"models/{robot}_noisy"
 elif model_selection == 2:
     model_path = f"models/{robot}_noise_trained"
+elif model_selection == 3:
+    model_path = f"models/{robot}_model_to_try"
 
-if model_selection != 2:
+
+if model_selection not in [2, 3]:
     sac_model = SAC.load(model_path)
 else:
     # this controller requires redefining obs and act spaces
-    obs_space = gym.spaces.Box(np.array([-1.0] * 4), np.array([1.0] * 4))
+    obs_space = gym.spaces.Box(np.array([-1.0] * 50), np.array([1.0] * 50))
     act_space = gym.spaces.Box(np.array([-1]), np.array([1]))
     sac_model = SAC.load(model_path, custom_objects={'observation_space': obs_space, 'action_space': act_space})
 
@@ -79,8 +83,8 @@ controller = EvolSACController(
     dynamics_func=dynamics_func,
     window_size=0,
     include_time=False,
-    ctrl_rate=ctrl_rate,
-    wait_steps=wait_steps,
+#    ctrl_rate=ctrl_rate,
+#    wait_steps=wait_steps,
 )
 
 
