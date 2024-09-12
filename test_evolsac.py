@@ -12,7 +12,7 @@ from double_pendulum.model.symbolic_plant import SymbolicDoublePendulum
 from double_pendulum.simulation.gym_env import double_pendulum_dynamics_func
 from double_pendulum.simulation.perturbations import get_random_gauss_perturbation_array
 from double_pendulum.simulation.simulation import Simulator
-from double_pendulum.utils.wrap_angles import wrap_angles_diff, wrap_angles_top
+from double_pendulum.utils.wrap_angles import wrap_angles_diff
 from stable_baselines3 import SAC
 
 # from double_pendulum.controller.evolsac.evolsac_controller import EvolSACController
@@ -31,7 +31,7 @@ if model_selection == 5:
     max_torque = 4.5
 
 # trajectory
-dt = 1/500
+dt = 1 / 500
 t_final = 10.0
 N = int(t_final / dt)
 T_des = np.linspace(0, t_final, N + 1)
@@ -49,7 +49,7 @@ plant = SymbolicDoublePendulum(model_pars=mpar)
 print("Loading model parameters...")
 simulator = Simulator(plant=plant)
 
-max_velocity = 50.0  # usually 50.0 
+max_velocity = 50.0  # usually 50.0
 
 if model_selection in [4, 5]:
     max_velocity = 20
@@ -90,7 +90,7 @@ if model_selection not in [2, 3, 4, 5]:
     sac_model = SAC.load(model_path)
 else:
     # this controller requires redefining obs and act spaces
-    if model_selection in [3,4,5]:
+    if model_selection in [3, 4, 5]:
         obs_space = gym.spaces.Box(np.array([-1.0] * 50), np.array([1.0] * 50))
         window_size = 10
     else:
@@ -131,7 +131,6 @@ def condition1(t, x):
     return switch
 
 
-
 def condition2(t, x):
     goal = [np.pi, 0.0, 0.0, 0.0]
 
@@ -144,12 +143,12 @@ def condition2(t, x):
         switch = True
         print(f"Switch to LQR at time={t}")
 
-    #theta1, theta2, _, _ = x
+    # theta1, theta2, _, _ = x
 
-    #link_end_points = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])
-    #y_ee = link_end_points[1][1]
+    # link_end_points = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])
+    # y_ee = link_end_points[1][1]
 
-    #if y_ee > 0.42:
+    # if y_ee > 0.42:
     #    print(f"Switching controller at {y_ee}")
     #    switch = True
 
@@ -206,7 +205,7 @@ run_experiment(
     can_port="can0",
     motor_ids=[3, 1],
     motor_directions=[1.0, -1.0],
-    tau_limit=[6.0,0.5] if robot == "pendubot" else [0.5, 6.0],
+    tau_limit=[6.0, 0.5] if robot == "pendubot" else [0.5, 6.0],
     save_dir=os.path.join(
         "data",
         f"{robot}/evolsac_{max_torque}Nm_{model_path}{'_FC' if friction_compensation else ''}",
