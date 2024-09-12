@@ -97,12 +97,8 @@ def main():
     control_frequency = 1 / 100
     ctrl_rate = int(control_frequency / dt)
 
-    # Model path based on model selection to define based on the found models
-    model_paths = {
-        0: f"new_models/{robot}_no_friction",
-        1: f"new_models/{robot}_noisy",
-    }
-    model_path = model_paths.get(model_selection)
+    # model path entirely defined by terminal args
+    model_path = f"new_models/{robot}/{model_selection}"
 
     # Load SAC model
     obs_space = gym.spaces.Box(np.array([-1.0] * 4), np.array([1.0] * 4))

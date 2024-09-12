@@ -1,0 +1,11 @@
+model 0:
+	- trained with max_torque = 3 and max_velocity = 50
+	- trained on model with friction and delay (0.05)
+	- score 0.502
+	- evaluation number 136
+	- obtained by just penalising more the velocities in the stabilisation region
+
+model 1:
+	- same as 0, but obtained at evaluation step number 176
+	- socre 0.44
+	- worth trying, as it has seen more dynamics so it may be more robust
