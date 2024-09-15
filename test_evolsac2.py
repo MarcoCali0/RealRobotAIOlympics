@@ -38,13 +38,13 @@ def parse_args():
     )
     parser.add_argument(
         "--friction_compensation",
-        type=bool,
+        type=str,
         choices=["y", "n"],
         help="Enable friction compensation.",
     )
     parser.add_argument(
         "--lqr",
-        type=bool,
+        type=str,
         choices=["y", "n"],
         help="Enable LQR controller for stabilisation.",
     )
