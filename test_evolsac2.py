@@ -21,7 +21,7 @@ from evolsaccontroller import EvolSACController
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Run double pendulum control experiment."
-        + "\nExample: python script.py pendubot --model_selection 0 --lqr True --friction_compensation False",
+        + "\nExample: python script.py pendubot --model_selection 0 --lqr y --friction_compensation n",
     )
 
     parser.add_argument(
@@ -31,22 +31,21 @@ def parse_args():
         help="Type of robot: acrobot or pendubot",
     )
     parser.add_argument(
-        "--friction_compensation",
-        type=bool,
-        choices=[True, False],
-        help="Enable friction compensation.",
-    )
-    parser.add_argument(
         "--model_selection",
         type=int,
-        choices=range(8),
         default=0,
-        help="Select model (0-8).",
+        help="Select model.",
+    )
+    parser.add_argument(
+        "--friction_compensation",
+        type=bool,
+        choices=["y", "n"],
+        help="Enable friction compensation.",
     )
     parser.add_argument(
         "--lqr",
         type=bool,
-        choices=[True, False],
+        choices=["y", "n"],
         help="Enable LQR controller for stabilisation.",
     )
     return parser.parse_args()
@@ -55,9 +54,9 @@ def parse_args():
 def main():
     args = parse_args()
     robot = args.robot
-    friction_compensation = args.friction_compensation
+    friction_compensation = True if args.friction_compensation == "y" else False
     model_selection = args.model_selection
-    LQR_enabled = args.lqr
+    LQR_enabled = True if args.lqr == "y" else False
 
     # New models have all max_torque = 3.0, max_velocity = 50.0, window_size = 0
     max_torque = 3.0
