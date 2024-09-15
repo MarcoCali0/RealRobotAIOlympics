@@ -75,6 +75,7 @@ def main():
     # Load model parameters and setup plant
     model_par_path = "model_parameters.yml"
     mpar = model_parameters(filepath=model_par_path)
+    mpar.set_torque_limit(torque_limit)
     plant = SymbolicDoublePendulum(model_pars=mpar)
 
     # Simulation setup
