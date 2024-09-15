@@ -4,8 +4,74 @@ model 0:
 	- score 0.502
 	- evaluation number 136
 	- obtained by just penalising more the velocities in the stabilisation region
+	- this can be test with friction compensation and LQR, or not
 
 model 1:
 	- same as 0, but obtained at evaluation step number 176
-	- socre 0.44
+	- score 0.44
 	- worth trying, as it has seen more dynamics so it may be more robust
+	- this can be test with friction compensation and LQR, or not
+
+######################################################################
+
+model 2:
+	- trained with max_torque = 3 and max_velocity = 50
+	- trained on model with friction and delay (0.05)
+	- trained by randomising the initial position of the robot between
+	 the bottom state and the stabilisation region (with 40% probability)
+	- evaluation step  164
+	- score 0.439
+	- this can be test with friction compensation and LQR, or not	
+
+model 3:
+	- like model 2, but different evaluation step 73
+	- score 0.422
+	- this can be test with friction compensation and LQR, or not
+
+####################################################################
+
+model XXX:
+	- same as 2 and 3, but with max_torque = 2
+	- this can be test with friction compensation and LQR, or not
+	- No results from this training!!!
+	
+####################################################################
+
+model 4: 
+	- same as model 3, but torque_limit = [3, 0.5]
+	- I don't know if this is permitted, but worth trying
+	- forgot to actually pass that torque_limit to the simulator, not sure how this will work 
+	- score 0.495
+	- evaluation 116
+
+model 5: 
+	- evaluation 237
+	- score 0.413
+	- chosen because it has more training experience, so it may be more robust
+
+####################################################################
+
+model 6: 
+	- trained with domain randomisation where all the parameters are changed according to 
+	the lists defined in the robustness tests
+	- this domain randomisation should make the controller much more robust
+	- randomisation of the initial state between top and bottom
+	- torque_limit = [max_torque = 3.0, 0]
+	- score 0.438
+	- evaluation 134
+	- this doesn't have the highest score between all the models, but it should be very robust
+
+####################################################################
+
+model 7:
+	- trained adding an additional reward when in the roa region
+	- trained with robustness 0.9
+	- doesn't simulate the LQR 
+	- score 0.507
+	- evaluation 87
+	
+model 8:
+	- just like 7 but evaluation 142
+	- score 0.470
+	- might be more robust
+

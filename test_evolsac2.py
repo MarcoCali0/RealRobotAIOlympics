@@ -39,9 +39,9 @@ def parse_args():
     parser.add_argument(
         "--model_selection",
         type=int,
-        choices=[0, 1, 2, 3, 4, 5],
+        choices=range(8),
         default=0,
-        help="Select model (0-5).",
+        help="Select model (0-8).",
     )
     parser.add_argument(
         "--lqr",
@@ -69,9 +69,9 @@ def main():
     # Time parameters
     dt = 1 / 500
     t_final = 10.0
-    N = int(t_final / dt)
-    T_des = np.linspace(0, t_final, N + 1)
-    U_des = np.zeros((N + 1, 2))
+    # N = int(t_final / dt)
+    # T_des = np.linspace(0, t_final, N + 1)
+    # U_des = np.zeros((N + 1, 2))
 
     # Load model parameters and setup plant
     model_par_path = "model_parameters.yml"
@@ -201,11 +201,11 @@ def main():
         tau_limit=[6.0, 0.5] if robot == "pendubot" else [0.5, 6.0],
         save_dir=os.path.join(
             "data",
-            f"{robot}/evolsac_{max_torque}Nm_{model_path}{'_FC' if friction_compensation else ''}",
+            f"{robot}/evolsac_model_{model_selection}{'_FC' if friction_compensation else ''}",
         ),
         record_video=False,
         safety_velocity_limit=30.0,
-        perturbation_array=perturbation_array,
+        # perturbation_array=perturbation_array,
     )
 
 
