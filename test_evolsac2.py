@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import copy
 import gymnasium as gym
 import numpy as np
 from double_pendulum.controller.combined_controller import CombinedController
@@ -116,12 +117,13 @@ def main():
 
     S = np.loadtxt(os.path.join(lqr_path, "Smatrix"))
     rho = np.loadtxt(os.path.join(lqr_path, "rho"))
+    print(Q_lqr, R_lqr, S, rho)
 
     # Define switching conditions
     def condition1(t, x):
         theta1, theta2, _, _ = x
         y_ee = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])[1][1]
-        if y_ee <= 0.2:
+        if y_ee <= 0.2 and LQR_enabled:
             print(f"Switching to SAC controller at y_ee = {y_ee}")
             return True
 
@@ -131,10 +133,21 @@ def main():
     def condition2(t, x):
         goal = [np.pi, 0.0, 0.0, 0.0]
         delta = wrap_angles_diff(np.subtract(x, goal))
-        if np.einsum("i,ij,j", delta, S, delta) < rho:
-            print(f"Switch to LQR at time = {t}")
+        theta1, theta2, _, _ = x
+        y_ee = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])[1][1]
+
+        if np.einsum("i,ij,j", delta, S, delta) < rho and LQR_enabled:
+            print(f"Switch to LQR at time = {t}, with height {y_ee}")
             return True and LQR_enabled
         return False
+
+        #theta1, theta2, omega1, omega2 = x
+        #y_ee = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])[1][1]
+        #vel = np.sqrt(omega1**2 + omega2**2)
+        #if y_ee > 0.45 and LQR_enabled and vel < 0.1:
+        #    return True
+        #else:
+        #    return False
 
     # SAC controller
     controller1 = EvolSACController(
@@ -147,6 +160,8 @@ def main():
     )
 
     # LQR controller
+    # mpar = copy.deepcopy(mpar)
+    # mpar.set_torque_limit([6.0, 0.0])
     controller2 = LQRController(model_pars=mpar)
     controller2.set_goal([np.pi, 0.0, 0.0, 0.0])
     controller2.set_cost_matrices(Q=Q_lqr, R=R_lqr)

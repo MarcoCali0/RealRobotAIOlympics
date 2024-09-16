@@ -11,7 +11,7 @@ model 1:
 	- score 0.44
 	- worth trying, as it has seen more dynamics so it may be more robust
 	- this can be test with friction compensation and LQR, or not
-
+    - success rate 0/10
 ######################################################################
 
 model 2:
@@ -48,6 +48,7 @@ model 5:
 	- evaluation 237
 	- score 0.413
 	- chosen because it has more training experience, so it may be more robust
+    - success rate 3/10
 
 ####################################################################
 
@@ -60,7 +61,7 @@ model 6:
 	- score 0.438
 	- evaluation 134
 	- this doesn't have the highest score between all the models, but it should be very robust
-
+    - MOST PROMISING success rate 5/10
 ####################################################################
 
 model 7:
