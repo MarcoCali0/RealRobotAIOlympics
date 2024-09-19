@@ -76,3 +76,18 @@ model 8:
 	- score 0.470
 	- might be more robust
 
+###################################################################
+
+model 9:
+	- same setup as model 6, but more training
+	- evaluation 232
+	- score 0.455
+	
+model 10:
+	- same as above
+	- evaluation 138
+	- score 0.517
+
+
+
+
