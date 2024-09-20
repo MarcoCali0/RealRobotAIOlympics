@@ -16,8 +16,10 @@ from double_pendulum.simulation.gym_env import double_pendulum_dynamics_func
 from double_pendulum.simulation.simulation import Simulator
 from evotorch import Problem
 from evotorch.algorithms.distributed.gaussian import SNES
-from magic import deepcopy_model, load_controller
 from stable_baselines3 import SAC
+
+import donothing
+from magic import deepcopy_model, load_controller
 from wrappers import *
 
 np.random.seed(0)
@@ -50,7 +52,7 @@ robot = str(sys.argv[1])
 
 design = "design_C.1"
 model = "model_1.0"
-model_par_path ="model_parameters.yml"
+model_par_path = "model_parameters.yml"
 
 
 # model and reward parameter
@@ -59,7 +61,7 @@ torque_limit = [max_torque, 0] if robot == "pendubot" else [0, max_torque]
 
 mpar = model_parameters(filepath=model_par_path)
 mpar.set_torque_limit(torque_limit)
-dt = 1/500 # controller runs at 100Hz
+dt = 1 / 500  # controller runs at 100Hz
 t_final = 10
 integrator = "runge_kutta"
 
@@ -293,11 +295,13 @@ def test_policy(policy_params, n_experiments=5):
 
     return score if not np.isnan(score) else 0.0
 
+n_experiments_train = 5
+n_experiments_test = 3
 
 # Set up the EvoTorch problem
 problem = Problem(
     "max",
-    lambda par: test_policy(par, n_experiments=3),
+    lambda par: test_policy(par, n_experiments=n_experiments_train),
     solution_length=len(
         torch.cat(
             [
@@ -316,13 +320,14 @@ initial_solution = np.concatenate(
     ]
 )
 
-stdev_init = 0.02 # originally 0.0075
+stdev_init = 0.02  # originally 0.0075
 optimizer = SNES(
     problem, popsize=WORKERS, center_init=initial_solution, stdev_init=stdev_init
 )
 scores_train = []
 scores_test = []
 best_score_train = 0
+
 for generation in range(1000):
     optimizer.step()
     print(
@@ -332,7 +337,7 @@ for generation in range(1000):
     best_params = optimizer.status["best"].values
     score = optimizer.status["best_eval"]
 
-    scores_train.append(np.round(score,3))
+    scores_train.append(np.round(score, 3))
     np.savetxt(f"scores_train", scores_train)
 
     # Update the policy's parameters
@@ -349,22 +354,31 @@ for generation in range(1000):
         )
         REFERENCE_AGENT.policy.actor.latent_pi.load_state_dict(state_dict)
 
-    real_score = run_policy(
-        REFERENCE_AGENT.policy.actor.latent_pi.state_dict(), n_experiments=3
-    )
-    scores_test.append(np.round(real_score,3))
-    np.savetxt("scores_test", scores_test)
-    print(f"\n######## Real Score (Test Time): {real_score} #########\n")
+    if score > best_score_train:
+        real_score = run_policy(
+            REFERENCE_AGENT.policy.actor.latent_pi.state_dict(),
+            n_experiments=n_experiments_test,
+        )
+        scores_test.append(np.round(real_score, 3))
+        np.savetxt("scores_test", scores_test)
+        print(f"\n######## Real Score (Test Time): {real_score} #########\n")
 
-    if not os.path.exists(f"savings_{max_torque}"):
-        os.makedirs(f"savings_{max_torque}", exist_ok=True)
-    REFERENCE_AGENT.save(
-        f"savings_{max_torque}/{generation}/best_model-{score}-{real_score}.zip"
-    )
-    torch.save(
-        REFERENCE_AGENT.policy.actor.latent_pi.state_dict(),
-        f"savings_{max_torque}/{generation}/optimized_policy-{score}-{real_score}.pth",
-    )
-    input("Press ENTER to continue")
-    print(f"######### Starting with generation {generation+1} #########")
+        if not os.path.exists(f"savings_{max_torque}"):
+            os.makedirs(f"savings_{max_torque}", exist_ok=True)
+        REFERENCE_AGENT.save(
+            f"savings_{max_torque}/{generation}/best_model-{score}-{real_score}.zip"
+        )
+        torch.save(
+            REFERENCE_AGENT.policy.actor.latent_pi.state_dict(),
+            f"savings_{max_torque}/{generation}/optimized_policy-{score}-{real_score}.pth",
+        )
+        best_score_train = score
+        print(f"######### Starting with generation {generation+1} #########")
+    else:
+        print("Training cost has not improved, skipping tests")
+        scores_test.append(scores_test[-1] if len(scores_test) > 0 else 0)
 
+    key = input("Press ENTER to continue or press R to run donothing")
+    while key == "R":
+        donothing.main()
+        key = input("Press ENTER to continue or press R to run donothing")
