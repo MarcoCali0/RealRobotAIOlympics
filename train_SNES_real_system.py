@@ -50,13 +50,8 @@ robot = str(sys.argv[1])
 
 design = "design_C.1"
 model = "model_1.0"
-model_par_path = (
-    "../../../../data/system_identification/identified_parameters/"
-    + design
-    + "/"
-    + model
-    + "/model_parameters.yml"
-)
+model_par_path ="model_parameters.yml"
+
 
 # model and reward parameter
 max_velocity = 50
@@ -64,7 +59,7 @@ torque_limit = [max_torque, 0] if robot == "pendubot" else [0, max_torque]
 
 mpar = model_parameters(filepath=model_par_path)
 mpar.set_torque_limit(torque_limit)
-dt = 0.01
+dt = 1/500 # controller runs at 100Hz
 t_final = 10
 integrator = "runge_kutta"
 
@@ -122,7 +117,7 @@ def run_policy(state_dict, n_experiments):
 
     # Load Controller
     controller, leaderboard_config = load_controller(
-        dynamics_func, model, WINDOW_SIZE, INCLUDE_TIME, evaluating=False
+        dynamics_func, agent, WINDOW_SIZE, INCLUDE_TIME, evaluating=False
     )
 
     # Run n experiments
@@ -133,7 +128,7 @@ def run_policy(state_dict, n_experiments):
         )
         experiment_done = False
         while not experiment_done:
-            print(save_dir)
+            # print(save_dir)
 
             run_experiment(
                 controller=controller,
@@ -144,7 +139,7 @@ def run_policy(state_dict, n_experiments):
                 motor_directions=[1.0, -1.0],
                 tau_limit=torque_limit,
                 save_dir=save_dir,
-                record_video=True,
+                record_video=False,
                 safety_velocity_limit=30.0,
                 # perturbation_array=perturbation_array,
             )
@@ -222,7 +217,7 @@ def test_policy(policy_params, n_experiments=5):
 
     # Load Controller
     controller, leaderboard_config = load_controller(
-        dynamics_func, model, WINDOW_SIZE, INCLUDE_TIME, evaluating=False
+        dynamics_func, agent, WINDOW_SIZE, INCLUDE_TIME, evaluating=False
     )
 
     # Run n experiments
@@ -242,7 +237,7 @@ def test_policy(policy_params, n_experiments=5):
                 motor_directions=[1.0, -1.0],
                 tau_limit=torque_limit,
                 save_dir=save_dir,
-                record_video=True,
+                record_video=False,
                 safety_velocity_limit=30.0,
                 # perturbation_array=perturbation_array,
             )
@@ -302,7 +297,7 @@ def test_policy(policy_params, n_experiments=5):
 # Set up the EvoTorch problem
 problem = Problem(
     "max",
-    lambda par: test_policy(par, n_experiments=1),
+    lambda par: test_policy(par, n_experiments=3),
     solution_length=len(
         torch.cat(
             [
@@ -321,17 +316,24 @@ initial_solution = np.concatenate(
     ]
 )
 
+stdev_init = 0.02 # originally 0.0075
 optimizer = SNES(
-    problem, popsize=WORKERS, center_init=initial_solution, stdev_init=0.0075
+    problem, popsize=WORKERS, center_init=initial_solution, stdev_init=stdev_init
 )
+scores_train = []
+scores_test = []
+best_score_train = 0
 for generation in range(1000):
     optimizer.step()
     print(
-        f"Generation {generation}: Best reward so far: {optimizer.status['best'].evals}"
+        f"\n######## Generation {generation}: Best reward so far: {optimizer.status['best'].evals} ########\n"
     )
 
     best_params = optimizer.status["best"].values
     score = optimizer.status["best_eval"]
+
+    scores_train.append(np.round(score,3))
+    np.savetxt(f"scores_train", scores_train)
 
     # Update the policy's parameters
     with torch.no_grad():
@@ -348,8 +350,11 @@ for generation in range(1000):
         REFERENCE_AGENT.policy.actor.latent_pi.load_state_dict(state_dict)
 
     real_score = run_policy(
-        REFERENCE_AGENT.policy.actor.latent_pi.state_dict(), n_experiments=10
+        REFERENCE_AGENT.policy.actor.latent_pi.state_dict(), n_experiments=3
     )
+    scores_test.append(np.round(real_score,3))
+    np.savetxt("scores_test", scores_test)
+    print(f"\n######## Real Score (Test Time): {real_score} #########\n")
 
     if not os.path.exists(f"savings_{max_torque}"):
         os.makedirs(f"savings_{max_torque}", exist_ok=True)
@@ -360,3 +365,6 @@ for generation in range(1000):
         REFERENCE_AGENT.policy.actor.latent_pi.state_dict(),
         f"savings_{max_torque}/{generation}/optimized_policy-{score}-{real_score}.pth",
     )
+    input("Press ENTER to continue")
+    print(f"######### Starting with generation {generation+1} #########")
+
