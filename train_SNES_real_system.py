@@ -90,7 +90,7 @@ dynamics_func = double_pendulum_dynamics_func(
 )
 ###############################################################################
 
-model_path = "./new_models/pendubot/6.zip"
+model_path = "./new_models/pendubot/11.zip" # 6.zip
 REFERENCE_AGENT = SAC.load(model_path, device=torch.device("cpu"))
 
 
@@ -309,7 +309,7 @@ initial_solution = np.concatenate(
     ]
 )
 
-stdev_init = 0.02  # originally 0.0075
+stdev_init = 0.0075  # originally 0.0075
 optimizer = SNES(
     problem, popsize=WORKERS, center_init=initial_solution, stdev_init=stdev_init
 )
@@ -344,6 +344,7 @@ for generation in range(1000):
         REFERENCE_AGENT.policy.actor.latent_pi.load_state_dict(state_dict)
 
     if score > best_score_train:
+        key = input("Press ENTER to continue")
         real_score = run_policy(
             REFERENCE_AGENT.policy.actor.latent_pi.state_dict(),
             n_experiments=n_experiments_test,
