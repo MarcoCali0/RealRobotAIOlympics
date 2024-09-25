@@ -89,5 +89,13 @@ model 10:
 	- score 0.517
 
 
+###################################################################
 
+model 11:
+	- same as model 6, but randomization of the noise parameters
+	- evaluation 168
+	- score 0.497
 
+model 12: 
+	- evaluation 204 
+	- score 0.464

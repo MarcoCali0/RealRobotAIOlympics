@@ -1,7 +1,6 @@
 import argparse
 import os
 
-import copy
 import gymnasium as gym
 import numpy as np
 from double_pendulum.controller.combined_controller import CombinedController
@@ -141,12 +140,12 @@ def main():
             return True and LQR_enabled
         return False
 
-        #theta1, theta2, omega1, omega2 = x
-        #y_ee = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])[1][1]
-        #vel = np.sqrt(omega1**2 + omega2**2)
-        #if y_ee > 0.45 and LQR_enabled and vel < 0.1:
+        # theta1, theta2, omega1, omega2 = x
+        # y_ee = dynamics_func.simulator.plant.forward_kinematics([theta1, theta2])[1][1]
+        # vel = np.sqrt(omega1**2 + omega2**2)
+        # if y_ee > 0.45 and LQR_enabled and vel < 0.1:
         #    return True
-        #else:
+        # else:
         #    return False
 
     # SAC controller

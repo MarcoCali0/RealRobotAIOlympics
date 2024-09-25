@@ -46,7 +46,7 @@ assert (
 ), "Please provide: [max torque] [robustness] [window_size (0 = no window)] [include_time]"
 max_torque = 3.0
 WINDOW_SIZE = 0
-INCLUDE_TIME = False  # consider changing it
+INCLUDE_TIME = False  # consider changing it to True
 robot = str(sys.argv[1])
 
 
@@ -89,18 +89,6 @@ dynamics_func = double_pendulum_dynamics_func(
     torque_limit=torque_limit,
 )
 ###############################################################################
-
-n_envs = 1
-training_steps = 30_000_000_000_000
-verbose = 1
-eval_freq = 10_000
-n_eval_episodes = 1
-# a patto che i reward istantanei siano piccoli
-# 0.01 -> 1500000 -> 7
-# 0.003 -> 1500000 -> 46
-# 0.001 -> 1500000 -> 38
-# 0.0003 -> 1500000 -> 19
-learning_rate = 0.001
 
 model_path = "./new_models/pendubot/6.zip"
 REFERENCE_AGENT = SAC.load(model_path, device=torch.device("cpu"))
@@ -295,7 +283,8 @@ def test_policy(policy_params, n_experiments=5):
 
     return score if not np.isnan(score) else 0.0
 
-n_experiments_train = 5
+
+n_experiments_train = 6
 n_experiments_test = 3
 
 # Set up the EvoTorch problem
