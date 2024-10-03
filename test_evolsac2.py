@@ -187,9 +187,10 @@ def main():
     controller.set_filter(filter)
     controller.init()
 
+    np.random.seed(591)
     # Perturbations
     perturbation_array, _, _, _ = get_random_gauss_perturbation_array(
-        t_final, dt, 2, 1.0, [0.05, 0.1], [0.4, 0.6]
+        t_final, dt, 2, 1.0, [0.05, 0.1], [0.2, 0.5]
     )
 
     print(
@@ -214,12 +215,12 @@ def main():
         motor_directions=[1.0, -1.0],
         tau_limit=[6.0, 0.5] if robot == "pendubot" else [0.5, 6.0],
         save_dir=os.path.join(
-            "data",
+            "data_final_tests_perturbed_redo",
             f"{robot}/evolsac_model_{model_selection}{'_FC' if friction_compensation else ''}",
         ),
-        record_video=False,
+        record_video=True,
         safety_velocity_limit=30.0,
-        # perturbation_array=perturbation_array,
+        perturbation_array=perturbation_array,
     )
 
 
